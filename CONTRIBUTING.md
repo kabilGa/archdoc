@@ -8,7 +8,7 @@ By participating you agree to follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 Requires Python 3.9+ and git.
 
 ```bash
-git clone https://github.com/<your-username>/archdoc.git
+git clone https://github.com/kabilGa/archdoc.git
 cd archdoc
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
@@ -58,6 +58,6 @@ A maintainer will review as soon as possible. Expect feedback; it is part of the
   reproduction.
 - **Features**: use the *Feature request* template and describe the problem before the
   solution.
-- **Security problems**: do not open a public issue; contact the maintainers privately.
+- **Security problems**: do not open a public issue; email kabil.gannoun@ept.ucar.tn privately.
 
 Search existing issues first to avoid duplicates.

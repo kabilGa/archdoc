@@ -9,7 +9,7 @@ description = "Extract architecture context from a codebase to keep docs and tes
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-authors = [{ name = "archdoc contributors" }]
+authors = [{ name = "kabilGa" }]
 keywords = ["documentation", "developer-tools", "ast", "testing", "cli"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -42,3 +42,7 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "W"]
+
+[project.urls]
+Homepage = "https://github.com/kabilGa/archdoc"
+Issues = "https://github.com/kabilGa/archdoc/issues"
