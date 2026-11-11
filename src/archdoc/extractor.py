@@ -1,15 +1,17 @@
-"""Static extraction of architecture context using the standard-library ``ast`` module."""
+"""Static extraction of architecture context. Python uses the standard-library ``ast``."""
 
 from __future__ import annotations
 
 import ast
+import os
 from collections.abc import Iterable
 from pathlib import Path
 
+from archdoc.langs import extract_go, extract_javascript, extract_typescript
 from archdoc.models import ModuleInfo, ProjectContext, Symbol
 
 DEFAULT_EXCLUDES = frozenset(
-    {".git", ".venv", "venv", "__pycache__", "node_modules", "build", "dist", ".tox"}
+    {".git", ".venv", "venv", "__pycache__", "node_modules", "build", "dist", ".tox", "vendor"}
 )
 
 
@@ -20,31 +22,30 @@ def _signature(node: ast.AST) -> str:
     return f"({args}){suffix}"
 
 
-def _collect(body: list[ast.stmt], in_class: bool = False) -> Iterable[Symbol]:
+def _collect(body: list[ast.stmt], prefix: str = "") -> Iterable[Symbol]:
     for node in body:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            qual = prefix + node.name
             yield Symbol(
-                name=node.name,
-                kind="method" if in_class else "function",
+                name=qual,
+                kind="method" if prefix else "function",
                 lineno=node.lineno,
                 signature=_signature(node),
                 docstring=ast.get_docstring(node),
+                end_lineno=node.end_lineno or node.lineno,
+                public=not any(part.startswith("_") for part in qual.split(".")),
             )
         elif isinstance(node, ast.ClassDef):
+            qual = prefix + node.name
             yield Symbol(
-                name=node.name,
+                name=qual,
                 kind="class",
                 lineno=node.lineno,
                 docstring=ast.get_docstring(node),
+                end_lineno=node.end_lineno or node.lineno,
+                public=not any(part.startswith("_") for part in qual.split(".")),
             )
-            for member in _collect(node.body, in_class=True):
-                yield Symbol(
-                    name=f"{node.name}.{member.name}",
-                    kind=member.kind,
-                    lineno=member.lineno,
-                    signature=member.signature,
-                    docstring=member.docstring,
-                )
+            yield from _collect(node.body, prefix=qual + ".")
 
 
 def _imports(tree: ast.Module) -> list[str]:
@@ -65,53 +66,51 @@ def extract_module(source: str, path: str = "<string>") -> ModuleInfo:
         docstring=ast.get_docstring(tree),
         imports=_imports(tree),
         symbols=list(_collect(tree.body)),
+        language="python",
     )
 
 
+EXTRACTORS = {
+    ".py": extract_module,
+    ".js": extract_javascript,
+    ".jsx": extract_javascript,
+    ".mjs": extract_javascript,
+    ".cjs": extract_javascript,
+    ".ts": extract_typescript,
+    ".tsx": extract_typescript,
+    ".go": extract_go,
+}
+
+
+def extract_source(source: str, path: str) -> ModuleInfo:
+    """Extract context from ``source`` using the extractor for ``path``'s extension."""
+    extractor = EXTRACTORS[Path(path).suffix]
+    return extractor(source, path)
+
+
+def _skip_file(name: str) -> bool:
+    return name.endswith((".d.ts", ".min.js")) or Path(name).suffix not in EXTRACTORS
+
+
 def extract_project(root: Path, excludes: Iterable[str] | None = None) -> ProjectContext:
-    """Walk ``root`` and extract every ``*.py`` file. Unparseable files are skipped."""
+    """Walk ``root`` and extract every supported source file.
+
+    Supports Python, JavaScript/TypeScript and Go. Unparseable files are skipped.
+    ``excludes`` replaces :data:`DEFAULT_EXCLUDES` when given.
+    """
     root = Path(root)
     skip = set(DEFAULT_EXCLUDES if excludes is None else excludes)
     modules: list[ModuleInfo] = []
-    for file in sorted(root.rglob("*.py")):
-        rel = file.relative_to(root)
-        if any(part in skip for part in rel.parts):
-            continue
-        try:
-            source = file.read_text(encoding="utf-8")
-            modules.append(extract_module(source, rel.as_posix()))
-        except (SyntaxError, UnicodeDecodeError):
-            continue
-    return ProjectContext(root=str(root), modules=modules)
-
-
-def find_undocumented(ctx: ProjectContext) -> list[tuple[str, Symbol]]:
-    """Public symbols without a docstring, as ``(module_path, symbol)`` pairs."""
-    return [
-        (m.path, s)
-        for m in ctx.modules
-        for s in m.public_symbols
-        if not s.docstring and not s.name.split(".")[0].startswith("_")
-    ]
-
-
-def find_untested(ctx: ProjectContext, tests_dir: Path) -> list[tuple[str, Symbol]]:
-    """Public functions/classes whose bare name never appears in any test file.
-
-    A deliberately simple heuristic: it flags candidates for review, not proof of
-    missing coverage.
-    """
-    tests_dir = Path(tests_dir)
-    corpus = ""
-    if tests_dir.is_dir():
-        corpus = "\n".join(
-            p.read_text(encoding="utf-8", errors="ignore") for p in tests_dir.rglob("*.py")
-        )
-    missing = []
-    for module in ctx.modules:
-        for symbol in module.public_symbols:
-            if symbol.kind == "method":
+    for current, dirs, files in os.walk(root):
+        dirs[:] = sorted(d for d in dirs if d not in skip)
+        for name in sorted(files):
+            if _skip_file(name):
                 continue
-            if symbol.name not in corpus:
-                missing.append((module.path, symbol))
-    return missing
+            file = Path(current) / name
+            rel = file.relative_to(root).as_posix()
+            try:
+                modules.append(extract_source(file.read_text(encoding="utf-8"), rel))
+            except (SyntaxError, UnicodeDecodeError):
+                continue
+    modules.sort(key=lambda m: m.path)
+    return ProjectContext(root=str(root), modules=modules)

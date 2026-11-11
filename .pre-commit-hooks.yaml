@@ -1,0 +1,7 @@
+- id: archdoc-check
+  name: archdoc check
+  description: Report undocumented/untested public symbols and stale doc references.
+  entry: archdoc check
+  language: python
+  pass_filenames: false
+  always_run: true

@@ -26,7 +26,8 @@ ruff format --check .       # formatting (use `ruff format .` to fix)
 Try the CLI against this repo:
 
 ```bash
-archdoc check src --tests tests
+archdoc check src                      # self-check: docs, tests, stale references
+pytest --cov=archdoc --cov-report=json:coverage.json && archdoc check src --coverage coverage.json
 ```
 
 ## Project layout

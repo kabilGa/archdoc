@@ -1,0 +1,29 @@
+name: archdoc check
+description: Fail the build when public symbols lack docs or tests, or docs reference removed symbols.
+author: kabilGa
+branding:
+  icon: book-open
+  color: blue
+inputs:
+  path:
+    description: Directory to analyse.
+    default: "."
+  tests:
+    description: Tests directory.
+    default: tests
+  args:
+    description: Extra arguments passed to `archdoc check`.
+    default: ""
+  python-version:
+    description: Python version used to run archdoc.
+    default: "3.12"
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+    - run: python -m pip install "${{ github.action_path }}"
+      shell: bash
+    - run: archdoc check "${{ inputs.path }}" --tests "${{ inputs.tests }}" ${{ inputs.args }}
+      shell: bash

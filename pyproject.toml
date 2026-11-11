@@ -3,27 +3,36 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "archdoc"
-version = "0.1.0"
+name = "archdoc-cli"
+version = "0.2.0"
 description = "Extract architecture context from a codebase to keep docs and tests in sync."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [{ name = "kabilGa" }]
-keywords = ["documentation", "developer-tools", "ast", "testing", "cli"]
+keywords = ["documentation", "developer-tools", "ast", "testing", "cli", "docs-drift"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Documentation",
     "Topic :: Software Development :: Testing",
 ]
-dependencies = []
+dependencies = ['tomli>=2.0; python_version < "3.11"']
 
 [project.optional-dependencies]
-dev = ["pytest>=7.4", "pytest-cov>=4.1", "ruff>=0.4"]
+dev = ["pytest>=7.4", "pytest-cov>=4.1", "ruff>=0.4", "build>=1.0", "twine>=5.0"]
+
+[project.urls]
+Homepage = "https://github.com/kabilGa/archdoc"
+Issues = "https://github.com/kabilGa/archdoc/issues"
+Changelog = "https://github.com/kabilGa/archdoc/blob/main/CHANGELOG.md"
 
 [project.scripts]
 archdoc = "archdoc.cli:main"
@@ -43,6 +52,6 @@ src = ["src", "tests"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "W"]
 
-[project.urls]
-Homepage = "https://github.com/kabilGa/archdoc"
-Issues = "https://github.com/kabilGa/archdoc/issues"
+[tool.archdoc]
+tests = "tests"
+docs = ["README.md", "CONTRIBUTING.md", "docs"]

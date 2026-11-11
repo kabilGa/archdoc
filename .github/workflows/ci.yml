@@ -35,4 +35,17 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - run: pip install -e ".[dev]"
-      - run: pytest --cov=archdoc --cov-report=term-missing
+      - run: pytest --cov=archdoc --cov-report=term-missing --cov-report=json:coverage.json
+      - name: Self-check (docs, tests, coverage)
+        run: archdoc check src --coverage coverage.json
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build twine
+      - run: python -m build
+      - run: twine check dist/*
