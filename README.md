@@ -1,6 +1,6 @@
 # archdoc
 
-[![CI](https://github.com/OWNER/archdoc/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/archdoc/actions/workflows/ci.yml)
+[![CI](https://github.com/kabilGa/archdoc/actions/workflows/ci.yml/badge.svg)](https://github.com/kabilGa/archdoc/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **Automated context extraction that bridges evolving code architecture and the documentation and tests that describe it.**
@@ -47,7 +47,7 @@ More detail in [docs/architecture.md](docs/architecture.md).
 Requires Python 3.9+.
 
 ```bash
-git clone https://github.com/OWNER/archdoc.git
+git clone https://github.com/kabilGa/archdoc.git
 cd archdoc
 pip install .
 archdoc --version
